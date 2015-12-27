@@ -39,12 +39,12 @@ qplot(user_name, pitch_belt, data=x_train, fill=user_name, geom = c("boxplot"))
 qplot(roll_belt, data=x_train, colour=user_name, geom = c("density"))
 ## The data is skewed; possibly due to the ??
 
-a <- unlist((sapply(x_train, function(x) {if (is.numeric(x) | is.integer((x))) sd(x)})))
-which.min(a)
+train_sd <- unlist((sapply(x_train, function(x) {if (is.numeric(x) | is.integer((x))) sd(x)})))
+# which.min(train_sd)
 qplot(gyros_belt_y, data=x_train, colour=user_name, geom = c("density"))
 qplot(user_name, gyros_belt_y, data=x_train, fill=user_name, geom = c("boxplot"))
 
-sort(a)
+sort(train_sd)
 # x_train <- x_train[, !names(x_train) %in% rem_names]
 # x_test <- x_test[, !names(x_test) %in% rem_names]
 
@@ -79,6 +79,8 @@ library(randomForest)
 rf_mod <- randomForest(classe ~ ., data=x_train[,-c(1:6)], ntree = 20)
 pred <- predict(rf_mod, x_test[,-c(1:6)])
 confusionMatrix(pred, x_test$classe)
+pred_train <- predict(rf_mod)
+confusionMatrix(pred_train, x_train$classe)
 
 test <- read.csv(file = "pml-testing.csv", na.strings = c("NA", "#DIV/0!", ""))
 test <- test[!unlist(na_vec)]
@@ -87,7 +89,15 @@ test_std <- predict(std_obj, test[,-c(1:6, 60)])
 test[,std_names] <- test_std[,std_names]
 rm(test_std)
 
-pred_vals <- predict(rf_mod, test)
+answers <- predict(rf_mod, test)
 
 # require(rpart)
 # tree_mod <- train(classe ~ ., data = x_train[,-c(1:6)], method ="rpart")
+
+pml_write_files = function(x){
+    n = length(x)
+    for(i in 1:n){
+        filename = paste0("problem_id_",i,".txt")
+        write.table(x[i],file=filename,quote=FALSE,row.names=FALSE,col.names=FALSE)
+    }
+}
